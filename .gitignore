@@ -1,0 +1,14 @@
+/.DS_Store
+/INTEGRATION.md
+/dist
+/examples
+/index.html
+/node_modules
+/package-lock.json
+/package.json
+/public
+/server.js
+/src
+/test-click.html
+/test-iframe.html
+/webpack.config.js
