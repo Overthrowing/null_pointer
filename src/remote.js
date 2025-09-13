@@ -8,6 +8,7 @@ class RemoteDemo {
     this.gymote = new GymoteRemote();
     this.roomId = null;
     this.isConnected = false;
+    this.playerId = null;
     
     // UI elements
     this.roomInput = document.getElementById('roomInput');
@@ -65,8 +66,19 @@ class RemoteDemo {
     });
     
     // Socket events
-    this.socket.on('devices-connected', () => {
-      this.statusEl.textContent = 'Connected to screen!';
+    this.socket.on('player-assigned', (playerId) => {
+      this.playerId = playerId;
+      this.updatePlayerUI();
+    });
+    
+    this.socket.on('room-full', () => {
+      this.statusEl.textContent = 'Room is full (max 2 players)';
+      this.statusEl.className = 'status disconnected';
+      this.connectBtn.disabled = false;
+    });
+    
+    this.socket.on('devices-connected', (connectionInfo) => {
+      this.statusEl.textContent = `Connected as Player ${this.playerId}!`;
       this.statusEl.className = 'status connected';
       this.startGymote();
     });
@@ -75,6 +87,13 @@ class RemoteDemo {
       this.statusEl.textContent = 'Screen disconnected';
       this.statusEl.className = 'status disconnected';
       this.gymote.stop();
+    });
+    
+    this.socket.on('player-disconnected', (info) => {
+      // Update status if needed
+      if (this.isConnected) {
+        this.statusEl.textContent = `Connected as Player ${this.playerId} (${info.playersConnected} total)`;
+      }
     });
     
     this.socket.on('screen-info', (screenInfo) => {
@@ -183,10 +202,37 @@ class RemoteDemo {
     const buffer = this.gymote.buffer;
     const intArray = new Int16Array(buffer);
     
+    const playerColor = this.playerId === 1 ? 'Red' : 'Blue';
     this.coordinatesEl.innerHTML = `
+      ${playerColor} Player<br>
       X: ${intArray[0] || 0}, Y: ${intArray[1] || 0}<br>
-      Clicking: ${intArray[2] ? 'Yes' : 'No'}
+      Firing: ${intArray[2] ? 'Yes' : 'No'}
     `;
+  }
+  
+  updatePlayerUI() {
+    if (!this.playerId) return;
+    
+    const playerColor = this.playerId === 1 ? 'red' : 'blue';
+    const playerName = this.playerId === 1 ? 'Red' : 'Blue';
+    const playerEmoji = this.playerId === 1 ? '🔴' : '🔵';
+    
+    // Update button color
+    this.clickBtn.style.background = this.playerId === 1 
+      ? 'linear-gradient(145deg, #ff4444 0%, #cc3333 100%)'
+      : 'linear-gradient(145deg, #4444ff 0%, #3333cc 100%)';
+    
+    this.clickBtn.textContent = `${playerEmoji} FIRE`;
+    
+    // Update title
+    document.title = `Gymote Demo - ${playerName} Player`;
+    
+    // Update header
+    const header = document.querySelector('h1');
+    if (header) {
+      header.innerHTML = `${playerEmoji} GYMOTE REMOTE - ${playerName.toUpperCase()}`;
+      header.style.color = playerColor;
+    }
   }
 }
 

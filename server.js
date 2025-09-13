@@ -55,24 +55,46 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, { screen: null, remote: null });
+      rooms.set(roomId, { screen: null, remotes: [] });
     }
     
     const room = rooms.get(roomId);
-    room[deviceType] = socket.id;
     
-    console.log(`${deviceType} joined room ${roomId}`);
+    if (deviceType === 'screen') {
+      room.screen = socket.id;
+    } else if (deviceType === 'remote') {
+      // Assign player ID (max 2 players)
+      if (room.remotes.length < 2) {
+        const playerId = room.remotes.length === 0 ? 1 : 2;
+        room.remotes.push({ socketId: socket.id, playerId });
+        socket.playerId = playerId;
+        
+        // Send player assignment to the remote
+        socket.emit('player-assigned', playerId);
+      } else {
+        socket.emit('room-full');
+        return;
+      }
+    }
     
-    // Notify both devices when they're connected
-    if (room.screen && room.remote) {
-      io.to(roomId).emit('devices-connected');
-      console.log(`Room ${roomId} is fully connected`);
+    console.log(`${deviceType} joined room ${roomId}${deviceType === 'remote' ? ` as player ${socket.playerId}` : ''}`);
+    
+    // Notify all devices about connection status
+    if (room.screen && room.remotes.length > 0) {
+      io.to(roomId).emit('devices-connected', {
+        playersConnected: room.remotes.length,
+        players: room.remotes.map(r => r.playerId)
+      });
+      console.log(`Room ${roomId} has ${room.remotes.length} player(s) connected`);
     }
   });
 
   socket.on('gymote-data', (roomId, data) => {
-    // Forward gymote data to the screen
-    socket.to(roomId).emit('gymote-data', data);
+    // Forward gymote data to the screen with player ID
+    socket.to(roomId).emit('gymote-data', {
+      playerId: socket.playerId,
+      data: data
+    });
   });
 
   socket.on('screen-info', (roomId, screenInfo) => {
@@ -85,10 +107,33 @@ io.on('connection', (socket) => {
     
     // Clean up rooms
     for (const [roomId, room] of rooms.entries()) {
-      if (room.screen === socket.id || room.remote === socket.id) {
-        rooms.delete(roomId);
+      if (room.screen === socket.id) {
+        // Screen disconnected - notify all remotes
         socket.to(roomId).emit('device-disconnected');
+        rooms.delete(roomId);
         break;
+      } else {
+        // Check if it's a remote
+        const remoteIndex = room.remotes.findIndex(r => r.socketId === socket.id);
+        if (remoteIndex !== -1) {
+          const disconnectedPlayerId = room.remotes[remoteIndex].playerId;
+          room.remotes.splice(remoteIndex, 1);
+          
+          // Notify remaining clients about disconnection
+          socket.to(roomId).emit('player-disconnected', {
+            playerId: disconnectedPlayerId,
+            playersConnected: room.remotes.length,
+            players: room.remotes.map(r => r.playerId)
+          });
+          
+          console.log(`Player ${disconnectedPlayerId} disconnected from room ${roomId}`);
+          
+          // Delete room if no remotes left
+          if (room.remotes.length === 0 && !room.screen) {
+            rooms.delete(roomId);
+          }
+          break;
+        }
       }
     }
   });

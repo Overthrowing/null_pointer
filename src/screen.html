@@ -147,7 +147,8 @@
             transition: all 0.1s ease;
         }
 
-        .cursor::before {
+        /* Player 1 (Red) Cursor */
+        .cursor.player-1::before {
             content: '';
             position: absolute;
             top: 50%;
@@ -163,7 +164,7 @@
                 0 0 10px rgba(255, 68, 68, 0.5);
         }
 
-        .cursor::after {
+        .cursor.player-1::after {
             content: '';
             position: absolute;
             top: 50%;
@@ -180,11 +181,45 @@
                 0 0 5px rgba(255, 68, 68, 0.3);
         }
 
+        /* Player 2 (Blue) Cursor */
+        .cursor.player-2::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            transform: translate(-50%, -50%);
+            border: 2px solid #4444ff;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 0 1px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 0 10px rgba(68, 68, 255, 0.5);
+        }
+
+        .cursor.player-2::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background: 
+                linear-gradient(90deg, transparent 10px, #4444ff 10px, #4444ff 12px, transparent 12px),
+                linear-gradient(0deg, transparent 10px, #4444ff 10px, #4444ff 12px, transparent 12px);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 0 5px rgba(68, 68, 255, 0.3);
+        }
+
         .cursor.clicking {
             transform: translate(-50%, -50%) scale(1.2);
         }
 
-        .cursor.clicking::before {
+        .cursor.player-1.clicking::before {
             border-color: #44ff44;
             box-shadow: 
                 0 0 0 1px rgba(0, 0, 0, 0.8),
@@ -193,7 +228,25 @@
             animation: scopePulse 0.2s ease-out;
         }
 
-        .cursor.clicking::after {
+        .cursor.player-1.clicking::after {
+            background: 
+                linear-gradient(90deg, transparent 10px, #44ff44 10px, #44ff44 12px, transparent 12px),
+                linear-gradient(0deg, transparent 10px, #44ff44 10px, #44ff44 12px, transparent 12px);
+            box-shadow: 
+                0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 0 8px rgba(68, 255, 68, 0.5);
+        }
+
+        .cursor.player-2.clicking::before {
+            border-color: #44ff44;
+            box-shadow: 
+                0 0 0 1px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 0 15px rgba(68, 255, 68, 0.8);
+            animation: scopePulse 0.2s ease-out;
+        }
+
+        .cursor.player-2.clicking::after {
             background: 
                 linear-gradient(90deg, transparent 10px, #44ff44 10px, #44ff44 12px, transparent 12px),
                 linear-gradient(0deg, transparent 10px, #44ff44 10px, #44ff44 12px, transparent 12px);
@@ -287,17 +340,27 @@
                 <strong>Phone URL:</strong><br>
                 <span id="phoneUrl" style="font-family: monospace; font-size: 14px;"></span>
             </div>
+            <div id="scoreBoard" style="display: none; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                <strong>Scores:</strong><br>
+                <div style="color: #ff4444; font-weight: bold;">🔴 Player 1: <span id="score1">0</span></div>
+                <div style="color: #4444ff; font-weight: bold;">🔵 Player 2: <span id="score2">0</span></div>
+            </div>
             <div>
                 <strong>Instructions:</strong><br>
                 1. Open the phone URL above on your phone<br>
                 2. Make sure both devices are on the same WiFi<br>
                 3. Enter the same room ID<br>
                 4. Grant gyroscope permission<br>
-                5. Move your phone to control the cursor
+                5. Move your phone to control the cursor<br>
+                <br>
+                <strong>Multiplayer:</strong><br>
+                • Up to 2 players can connect<br>
+                • Player 1 = Red cursor<br>
+                • Player 2 = Blue cursor
             </div>
         </div>
 
-        <div class="cursor" id="cursor"></div>
+        <!-- Cursors will be dynamically created -->
 
         <div class="demo-area">
             <iframe 
