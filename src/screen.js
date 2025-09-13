@@ -35,6 +35,16 @@ class ScreenDemo {
     const phoneUrl = `${window.location.origin}/remote?room=${this.roomId}`;
     document.getElementById('phoneUrl').textContent = phoneUrl;
     
+    // Display QR Code
+    const qrCodeImg = document.getElementById('qrCode');
+    if (qrCodeImg) {
+      qrCodeImg.src = `${window.location.origin}/qr/${this.roomId}`;
+      qrCodeImg.onerror = () => {
+        console.warn('Failed to load QR code');
+        qrCodeImg.style.display = 'none';
+      };
+    }
+    
     // Join room as screen
     this.socket.emit('join-room', this.roomId, 'screen');
     

@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const QRCode = require('qrcode');
 
 const app = express();
 const server = http.createServer(app);
@@ -43,6 +44,31 @@ app.get('/', (req, res) => {
 
 app.get('/remote', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'remote.html'));
+});
+
+// QR code endpoint
+app.get('/qr/:roomId', async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+    const remoteUrl = `${req.protocol}://${req.get('host')}/remote?room=${roomId}`;
+    
+    // Generate QR code as SVG
+    const qrCode = await QRCode.toString(remoteUrl, {
+      type: 'svg',
+      width: 256,
+      margin: 2,
+      color: {
+        dark: '#ffffff',
+        light: '#1a1a1a'
+      }
+    });
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(qrCode);
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    res.status(500).send('Error generating QR code');
+  }
 });
 
 // Socket.IO connection handling
